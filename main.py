@@ -59,7 +59,11 @@ def extract_phone_number(unit_name: str) -> str:
 phone_extractor_tool = Tool.from_function(
     func=extract_phone_number,
     name="PhoneExtractor",
-    description="Busca números de telefone de uma unidade administrativa na página de contatos do TRT22. Recebe o nome da unidade como entrada."
+    description=(
+        "Busca números de telefone de uma unidade administrativa "
+        "na página de contatos do TRT22. Recebe o nome da unidade"
+        " como entrada."
+    )
 )
 
 modelo = init_chat_model("llama3-8b-8192", model_provider="groq")
@@ -103,7 +107,11 @@ while True:
         break
 
     events = graph_memory.stream(
-        {"messages": [("user", user_input)]}, config, stream_mode="values"
+        {
+            "messages": [("user", user_input)]
+        },
+        config, 
+        stream_mode="values"
     )
     for event in events:
         event["messages"][-1].pretty_print()

@@ -1,5 +1,6 @@
 langchain[groq]
 langgraph
+langchain-text-splitters
 langchain_community
 wikipedia
 python_dotenv
