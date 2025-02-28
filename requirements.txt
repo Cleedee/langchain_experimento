@@ -1,0 +1,7 @@
+langchain[groq]
+langgraph
+langchain_community
+wikipedia
+python_dotenv
+beautifulsoup4
+requests
