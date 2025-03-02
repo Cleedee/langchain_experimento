@@ -6,3 +6,7 @@ wikipedia
 python_dotenv
 beautifulsoup4
 requests
+pypdf
+faiss-cpu
+sentence-transformers
+huggingface_hub
