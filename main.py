@@ -20,7 +20,7 @@ CONTACTS_PAGE_URL = "https://www.trt22.jus.br/informes/agenda-de-contatos"
 
 dotenv.load_dotenv()
 
-def extract_phone_number(unit_name: str) -> str:
+def extract_from_contact_page(unit_name: str, column: int) -> str:
     try:
         # Faz a requisição HTTP para a página de contatos
         headers = {'User-Agent': 'Mozilla/5.0 (compatible; LangchainBot/1.0)'}
@@ -39,13 +39,13 @@ def extract_phone_number(unit_name: str) -> str:
             rows = table.find_all('tr')  # Encontra todas as linhas da tabela
             for row in rows:
                 cells = row.find_all('td')  # Encontra todas as células da linha
-                if len(cells) >= 2:  # Assume que a primeira coluna é o nome e a segunda é o telefone
+                if len(cells) >= 1 + column:  # Assume que a primeira coluna é o nome e a segunda é o telefone
                     name = cells[0].get_text(strip=True).lower()
-                    phone = cells[1].get_text(strip=True)
+                    target = cells[column].get_text(strip=True)
 
                     # Verifica se o nome da unidade corresponde à consulta
                     if unit_name.lower() in name:
-                        results.append(f"{name.capitalize()}: {phone}")
+                        results.append(f"{name.capitalize()}: {target}")
 
         if results:
             return "\n".join(results)
@@ -55,6 +55,12 @@ def extract_phone_number(unit_name: str) -> str:
         return f"Erro na requisição: {str(e)}"
     except Exception as e:
         return f"Erro: {str(e)}"
+
+def extract_phone_number(unit_name: str) -> str:
+    return extract_from_contact_page(unit_name, 1)
+
+def extract_office_hours_number(unit_name: str) -> str:
+    return extract_from_contact_page(unit_name, 2)
 
 phone_extractor_tool = Tool.from_function(
     func=extract_phone_number,
@@ -66,12 +72,22 @@ phone_extractor_tool = Tool.from_function(
     )
 )
 
+office_hours_extractor_tool = Tool.from_function(
+    func=extract_office_hours_number,
+    name="OfficeHoursExtractor",
+    description=(
+        "Busca o horário de expediente de uma unidade administrativa "
+        "na página de contatos do TRT22. Recebe o nome da unidade"
+        " como entrada."
+    )
+)
+
 modelo = init_chat_model("llama3-8b-8192", model_provider="groq")
 
 wikipedia_wrapper = WikipediaAPIWrapper(top_k_results=1, doc_content_chars_max=300)
 wikipedia_tool = WikipediaQueryRun(api_wrapper=wikipedia_wrapper)
 
-tools = [wikipedia_tool, phone_extractor_tool]
+tools = [wikipedia_tool, phone_extractor_tool, office_hours_extractor_tool]
 
 class State(TypedDict):
     messages: Annotated[list, add_messages]
@@ -91,6 +107,11 @@ graph_builder.add_node("chatbot", chatbot)
 
 tool_node = ToolNode(tools=tools)
 graph_builder.add_node("tools", tool_node)
+
+graph_builder.add_conditional_edges(
+    "chatbot",
+    tools_condition,
+)
 
 graph_builder.add_edge("tools", "chatbot")
 graph_builder.add_edge(START, "chatbot")
