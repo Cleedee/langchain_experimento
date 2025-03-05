@@ -10,3 +10,9 @@ pypdf
 faiss-cpu
 sentence-transformers
 huggingface_hub
+
+# curso Udemy
+transformers
+einops
+accelerate # simplificar o treinamento e a implementação de modelo em diferentes tipos de hardwares
+bitsandbytes # LLMs acessíveis por meio de quantização

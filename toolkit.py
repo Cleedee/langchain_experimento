@@ -1,13 +1,20 @@
-from langchain.document_loaders import PyPDFLoader
+import os
+
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.embeddings import HuggingFaceEmbeddings
-from langchain.vectorstores import FAISS
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.vectorstores import FAISS
+from langchain_community.document_loaders import PyPDFLoader
+from langchain_community.llms import HuggingFaceHub
 from langchain.chains import RetrievalQA
-from langchain import HuggingFaceHub
+import dotenv
+
+dotenv.load_dotenv()
 
 # 1. Carregar o documento PDF
-pdf_path = "/home/claudio/Tutoriais/langchain_experimento/feriados.pdf"  # Substitua pelo caminho correto
-loader = PyPDFLoader(pdf_path)
+HOLIDAYS_FILE=r"C:\Users\User\Projetos\tutoriais\langchain_experimento\feriados.pdf"
+
+print("Caminho do PDF:", HOLIDAYS_FILE)
+loader = PyPDFLoader(HOLIDAYS_FILE)
 documents = loader.load()
 
 # 2. Dividir o texto em chunks
@@ -17,9 +24,31 @@ text_splitter = RecursiveCharacterTextSplitter(
 )
 texts = text_splitter.split_documents(documents)
 
-# 3. Criar embeddings e vetorstore
-embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-mpnet-base-v2")
-vectorstore = FAISS.from_documents(texts, embeddings)
+def create_vectorstore(texts):
+    # 3. Criar embeddings e vetorstore
+    #embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-mpnet-base-v2")
+    embeddings = HuggingFaceEmbeddings(model_name="whereIsAI/UAE-Large-V1")
+    vectorstore = FAISS.from_documents(texts, embeddings)
+    #vectorstore = FAISS.from_texts(text=chunks, embedding=embeddings)
+
+    vectorstore.save_local('faiss_default')
+
+    return vectorstore
+
+vectorstore = create_vectorstore(texts)
+
+def create_conversation_chain(vectorstore=None):
+    if not vectorstore:
+        embeddings = HuggingFaceEmbeddings(model_name="whereIsAI/UAE-Large-V1")
+        vectorstore = FAISS.load_local('faiss_default', embeddings=embeddings)
+    llm = HuggingFaceHub(repo_id='google/flan-t5-large', model_kwargs={})
+    memory = ConversationBufferMemory(memory_ref='chat_history')
+    conversation_chain = ConversationRetrievalChain.from_text(
+        llm=llm,
+        retriever=vectorstore.as_retriever(),
+        memory=memory
+    )
+    return conversation_chain
 
 # 4. Configurar o modelo de linguagem (escolha uma das opções abaixo)
 
@@ -46,6 +75,4 @@ print("Resposta:", resultado["result"])
 print("\nFontes utilizadas:")
 for doc in resultado["source_documents"]:
     print(f"- Página {doc.metadata['page']}: {doc.page_content[:100]}...")
-
-
 
