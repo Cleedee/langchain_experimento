@@ -11,7 +11,7 @@ import dotenv
 dotenv.load_dotenv()
 
 # 1. Carregar o documento PDF
-HOLIDAYS_FILE=r"C:\Users\User\Projetos\tutoriais\langchain_experimento\feriados.pdf"
+HOLIDAYS_FILE = os.environ.get('HOLIDAYS_FILE') or ''
 
 print("Caminho do PDF:", HOLIDAYS_FILE)
 loader = PyPDFLoader(HOLIDAYS_FILE)
