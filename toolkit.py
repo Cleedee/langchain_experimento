@@ -1,17 +1,22 @@
 import os
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.embeddings import HuggingFaceEmbeddings, HuggingFaceBgeEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.llms import HuggingFaceHub
+from langchain_community.vectorstores import Qdrant
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import RunnablePassthrough
+from langchain_core.output_parsers import StrOutputParser
 from langchain.chains import RetrievalQA
 import dotenv
+import streamlit as st
 
 dotenv.load_dotenv()
 
 # 1. Carregar o documento PDF
-HOLIDAYS_FILE = os.environ.get('HOLIDAYS_FILE') or ''
+HOLIDAYS_FILE = r"C:\Users\claudio.torcato\Tutoriais\langchain_experimento\feriados.pdf"
 
 print("Caminho do PDF:", HOLIDAYS_FILE)
 loader = PyPDFLoader(HOLIDAYS_FILE)
@@ -24,55 +29,44 @@ text_splitter = RecursiveCharacterTextSplitter(
 )
 texts = text_splitter.split_documents(documents)
 
-def create_vectorstore(texts):
-    # 3. Criar embeddings e vetorstore
-    #embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-mpnet-base-v2")
-    embeddings = HuggingFaceEmbeddings(model_name="whereIsAI/UAE-Large-V1")
-    vectorstore = FAISS.from_documents(texts, embeddings)
-    #vectorstore = FAISS.from_texts(text=chunks, embedding=embeddings)
+# 3. Criar embeddings
+embedding_model_name = "sentence-transformers/all-mpnet-base-v2"
+embedding_model_kwargs = {'device': 'cpu'}
+embedding_encode_kwargs = {'normalize_embeddings': False}
+embeddings = HuggingFaceEmbeddings(
+    model_name=embedding_model_name,
+    model_kwargs=embedding_model_kwargs,
+    encode_kwargs=embedding_encode_kwargs
+)
+#
+#model_name = "BAAI/bge-large-en"
+model_name = "google/gemma-2-9b-it"
+#model_name = "google/flan-t5-large"
+model_kwargs = {'device': 'cpu', 'temperature': 0.7 }
+encode_kwargs = {'normalize_embeddings': False}
 
-    vectorstore.save_local('faiss_default')
+# 4. Configuração do vectorstore
+url = "http://localhost:6333"
+qdrant = Qdrant.from_documents(
+    texts,
+    embeddings,
+    url=url,
+    prefer_grpc=False,
+    collection_name="vector_db",
+)
 
-    return vectorstore
+# 5. Configurar o modelo de linguagem
 
-vectorstore = create_vectorstore(texts)
-
-def create_conversation_chain(vectorstore=None):
-    if not vectorstore:
-        embeddings = HuggingFaceEmbeddings(model_name="whereIsAI/UAE-Large-V1")
-        vectorstore = FAISS.load_local('faiss_default', embeddings=embeddings)
-    llm = HuggingFaceHub(repo_id='google/flan-t5-large', model_kwargs={})
-    memory = ConversationBufferMemory(memory_ref='chat_history')
-    conversation_chain = ConversationRetrievalChain.from_text(
-        llm=llm,
-        retriever=vectorstore.as_retriever(),
-        memory=memory
-    )
-    return conversation_chain
-
-# 4. Configurar o modelo de linguagem (escolha uma das opções abaixo)
-
-# Opção 1: Usando HuggingFace (gratuito)
-model_name = "google/flan-t5-xxl"
 model = HuggingFaceHub(
     repo_id=model_name,
-    model_kwargs={"temperature":0.1, "max_length":512}
+    model_kwargs=model_kwargs
 )
 
-# 5. Criar a cadeia de Q&A
-qa_chain = RetrievalQA.from_chain_type(
-    llm=model,
-    chain_type="stuff",
-    retriever=vectorstore.as_retriever(),
-    return_source_documents=True
-)
+#retriever = qdrant.as_retriever(search_type="similarity", search_kwargs={"k": 5})
+qa_chain = RetrievalQA.from_chain_type(llm=model, chain_type='stuff', retriever=qdrant.as_retriever())
 
-# 6. Fazer uma pergunta
-pergunta = "Quais são os feriados de outubro?"
-resultado = qa_chain({"query": pergunta})
-
-print("Resposta:", resultado["result"])
-print("\nFontes utilizadas:")
-for doc in resultado["source_documents"]:
-    print(f"- Página {doc.metadata['page']}: {doc.page_content[:100]}...")
-
+def questoes_feriados(question: str):
+    resposta = qa_chain.run(question)
+    print(f"Questão: {question}")
+    print(f"Tipo da Resposta: {type(resposta)}")
+    return resposta

@@ -15,6 +15,8 @@ from langchain.chat_models import  init_chat_model
 import requests
 from bs4 import BeautifulSoup
 
+from toolkit import questoes_feriados
+
 CONTACTS_PAGE_URL = "https://www.trt22.jus.br/informes/agenda-de-contatos"  
 
 dotenv.load_dotenv()
@@ -81,12 +83,19 @@ office_hours_extractor_tool = Tool.from_function(
     )
 )
 
-modelo = init_chat_model("llama3-8b-8192", model_provider="groq")
+holidays_tool = Tool.from_function(
+    func=questoes_feriados,
+    name="HolidaysExtrator",
+    description=(
+        "Busca feriados que afetam os expedientes do tribunal regional "
+        "do trabalho da 22ª região. Recebe uma pergunta com entrada."
+    )
+)
 
 wikipedia_wrapper = WikipediaAPIWrapper(top_k_results=1, doc_content_chars_max=300)
 wikipedia_tool = WikipediaQueryRun(api_wrapper=wikipedia_wrapper)
 
-tools = [wikipedia_tool, phone_extractor_tool, office_hours_extractor_tool]
+tools = [wikipedia_tool, phone_extractor_tool, office_hours_extractor_tool, holidays_tool ]
 
 class State(TypedDict):
     messages: Annotated[list, add_messages]
