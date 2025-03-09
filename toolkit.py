@@ -1,7 +1,8 @@
 import os
 
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.embeddings import HuggingFaceEmbeddings, HuggingFaceBgeEmbeddings
+from langchain_community.embeddings import HuggingFaceBgeEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.llms import HuggingFaceHub
@@ -16,8 +17,8 @@ import streamlit as st
 dotenv.load_dotenv()
 
 # 1. Carregar o documento PDF
-HOLIDAYS_FILE = r"C:\Users\claudio.torcato\Tutoriais\langchain_experimento\feriados.pdf"
-
+# HOLIDAYS_FILE = r"C:\Users\claudio.torcato\Tutoriais\langchain_experimento\feriados.pdf"
+HOLIDAYS_FILE = r"C:\Users\User\Projetos\tutoriais\langchain_experimento\data\feriados.pdf"
 print("Caminho do PDF:", HOLIDAYS_FILE)
 loader = PyPDFLoader(HOLIDAYS_FILE)
 documents = loader.load()
@@ -30,7 +31,7 @@ text_splitter = RecursiveCharacterTextSplitter(
 texts = text_splitter.split_documents(documents)
 
 # 3. Criar embeddings
-embedding_model_name = "sentence-transformers/all-mpnet-base-v2"
+embedding_model_name = "Jaume/gemma-2b-embeddings"
 embedding_model_kwargs = {'device': 'cpu'}
 embedding_encode_kwargs = {'normalize_embeddings': False}
 embeddings = HuggingFaceEmbeddings(
@@ -53,6 +54,7 @@ qdrant = Qdrant.from_documents(
     url=url,
     prefer_grpc=False,
     collection_name="vector_db",
+#    force_recreate = True
 )
 
 # 5. Configurar o modelo de linguagem
@@ -66,7 +68,7 @@ model = HuggingFaceHub(
 qa_chain = RetrievalQA.from_chain_type(llm=model, chain_type='stuff', retriever=qdrant.as_retriever())
 
 def questoes_feriados(question: str):
-    resposta = qa_chain.run(question)
+    resposta = qa_chain.invoke(question)
     print(f"Questão: {question}")
     print(f"Tipo da Resposta: {type(resposta)}")
     return resposta

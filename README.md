@@ -1,5 +1,11 @@
 # Experimentos com LangChain e HuggingFace
 
+## Servidor de Banco de Vetores 
+
+Execute com docker:
+
+ `docker run -d --name qdrant -p 6333:6333 qdrant/qdrant`
+
 ## Estudos do curso Domine LLMs com LangChain
 
 Instrutor: Jones Granatyr

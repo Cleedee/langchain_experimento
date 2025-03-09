@@ -2,6 +2,8 @@ langchain[groq]
 langgraph
 langchain-text-splitters
 langchain_community
+langchain-huggingface
+langchain-qdrant
 wikipedia
 python_dotenv
 beautifulsoup4
@@ -9,7 +11,6 @@ requests
 faiss-cpu
 sentence-transformers
 huggingface_hub
-
 # extração PDF toolkit.py
 llama-index
 pypdf
