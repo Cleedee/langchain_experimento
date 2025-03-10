@@ -4,6 +4,7 @@ langchain-text-splitters
 langchain_community
 langchain-huggingface
 langchain-qdrant
+langchain-google-genai
 wikipedia
 python_dotenv
 beautifulsoup4

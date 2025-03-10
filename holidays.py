@@ -11,6 +11,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 from langchain.chains import RetrievalQA
+from langchain_community.tools import Tool
 import dotenv
 import streamlit as st
 
@@ -72,3 +73,12 @@ def questoes_feriados(question: str):
     print(f"Questão: {question}")
     print(f"Tipo da Resposta: {type(resposta)}")
     return resposta
+
+holidays_tool = Tool.from_function(
+    func=questoes_feriados,
+    name="HolidaysExtrator",
+    description=(
+        "Busca feriados que afetam os expedientes do tribunal regional "
+        "do trabalho da 22ª região. Recebe uma pergunta com entrada."
+    )
+)
