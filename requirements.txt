@@ -17,3 +17,5 @@ llama-index
 pypdf
 qdrant-client
 streamlit
+# llamafile
+llama-cpp-python
