@@ -46,6 +46,24 @@ def extract_phone_number(unit_name: str) -> str:
 def extract_office_hours_number(unit_name: str) -> str:
     return extract_from_contact_page(unit_name, 2)
 
+def get_content_page(url: str):
+    response = requests.get(url)
+    if response.status_code != 200:
+        raise Exception(f"Erro ao acessar a página: {response.status_code}")
+    
+    soup = BeautifulSoup(response.content, 'html.parser')
+    
+    for script_or_style in soup(['script', 'style']):
+        script_or_style.decompose()
+    
+    texto = soup.get_text()
+    
+    linhas = [linha.strip() for linha in texto.splitlines() if linha.strip()]
+    
+    texto_limpo = '\n'.join(linhas)
+    
+    return texto_limpo
+
 phone_extractor_tool = Tool.from_function(
     func=extract_phone_number,
     name="PhoneExtractor",

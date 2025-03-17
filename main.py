@@ -13,6 +13,7 @@ from langgraph.prebuilt import ToolNode, tools_condition
 from langgraph.checkpoint.memory import MemorySaver
 
 from toolkit.portal import phone_extractor_tool, office_hours_extractor_tool
+from toolkit.utils import date_hour_tool, global_position_tool
 
 dotenv.load_dotenv()
 
@@ -21,7 +22,13 @@ dotenv.load_dotenv()
 wikipedia_wrapper = WikipediaAPIWrapper(top_k_results=1, doc_content_chars_max=300)
 wikipedia_tool = WikipediaQueryRun(api_wrapper=wikipedia_wrapper)
 
-tools = [wikipedia_tool, phone_extractor_tool, office_hours_extractor_tool]
+tools = [
+    wikipedia_tool, 
+    date_hour_tool, 
+    phone_extractor_tool, 
+    office_hours_extractor_tool,
+    global_position_tool
+]
 
 class State(TypedDict):
     messages: Annotated[list, add_messages]

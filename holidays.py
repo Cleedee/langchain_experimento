@@ -66,7 +66,11 @@ model = HuggingFaceHub(
 )
 
 #retriever = qdrant.as_retriever(search_type="similarity", search_kwargs={"k": 5})
-qa_chain = RetrievalQA.from_chain_type(llm=model, chain_type='stuff', retriever=qdrant.as_retriever())
+qa_chain = RetrievalQA.from_chain_type(
+    llm=model, 
+    chain_type='stuff', 
+    retriever=qdrant.as_retriever()
+)
 
 def questoes_feriados(question: str):
     resposta = qa_chain.invoke(question)
@@ -79,6 +83,6 @@ holidays_tool = Tool.from_function(
     name="HolidaysExtrator",
     description=(
         "Busca feriados que afetam os expedientes do tribunal regional "
-        "do trabalho da 22ª região. Recebe uma pergunta com entrada."
+        "do trabalho da 22ª região. Recebe uma pergunta como entrada."
     )
 )
