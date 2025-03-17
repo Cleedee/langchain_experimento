@@ -5,6 +5,7 @@ langchain_community
 langchain-huggingface
 langchain-qdrant
 langchain-google-genai
+langchain-chroma
 wikipedia
 python_dotenv
 beautifulsoup4
