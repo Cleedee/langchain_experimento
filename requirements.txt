@@ -13,6 +13,8 @@ requests
 faiss-cpu
 sentence-transformers
 huggingface_hub
+bitsandbytes
+accelerate>=0.26.0
 # extração PDF toolkit.py
 llama-index
 pypdf

@@ -28,3 +28,23 @@ model = AutoModelForCausalLM.from_pretrained(
     quantization_config=quantization_config
 )
 tokenizer = AutoTokenizer.from_pretrained(model_id)
+
+
+pipe = pipeline(
+    model = model,
+    tokenizer = tokenizer,
+    task = 'text-generation',
+    temperature = 0.1, # valor baixo, mais determinístico
+    max_new_tokens = 500,
+    do_sample = True,
+    repetition_penalty = 1.1,
+    return_full_text = False
+)
+
+llm = HuggingFacePipeline(pipeline= pipe)
+
+input = "Quem foi a primeira pessoa no espaço?"
+
+output = llm.invoke(input)
+
+print(output)

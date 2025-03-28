@@ -17,21 +17,21 @@ from toolkit.utils import date_hour_tool, global_position_tool
 
 dotenv.load_dotenv()
 
-
-
 wikipedia_wrapper = WikipediaAPIWrapper(top_k_results=1, doc_content_chars_max=300)
 wikipedia_tool = WikipediaQueryRun(api_wrapper=wikipedia_wrapper)
 
 tools = [
-    wikipedia_tool, 
-    date_hour_tool, 
-    phone_extractor_tool, 
+    wikipedia_tool,
+    date_hour_tool,
+    phone_extractor_tool,
     office_hours_extractor_tool,
-    global_position_tool
+    global_position_tool,
 ]
+
 
 class State(TypedDict):
     messages: Annotated[list, add_messages]
+
 
 graph_builder = StateGraph(State)
 
@@ -39,6 +39,7 @@ graph_builder = StateGraph(State)
 groq_api = os.environ.get("GROQ_API_KEY")
 llm = ChatGroq(api_key=groq_api, model="Gemma2-9b-It")
 llm_with_tools = llm.bind_tools(tools)
+
 
 def chatbot(state: State):
     return {"messages": [llm_with_tools.invoke(state["messages"])]}
@@ -71,11 +72,10 @@ while True:
     events = graph_memory.stream(
         {
             # "messages": [("user", user_input)]
-            "messages": [{'role': 'user', 'content': user_input}]
+            "messages": [{"role": "user", "content": user_input}]
         },
-        config, 
-        stream_mode="values"
+        config,
+        stream_mode="values",
     )
     for event in events:
         event["messages"][-1].pretty_print()
-
